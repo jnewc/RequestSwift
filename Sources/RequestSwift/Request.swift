@@ -17,8 +17,8 @@ public prefix func «(_ request: Request) async throws -> Response {
 infix operator ~>
 
 public struct Parsed<T> {
-    let body: T
-    let response: Response
+    public let body: T
+    public let response: Response
 }
 
 let jsonDecoder = JSONDecoder()
