@@ -115,15 +115,30 @@ public enum Method: String {
 public struct Header: RequestComponent {
     public let key: String
     public let value: String
+    
+    public init(key: String, value: String) {
+        self.key = key
+        self.value = value
+    }
 }
 
 public struct Query: RequestComponent {
     public let key: String
     public let value: String
+    
+    public init(key: String, value: String) {
+        self.key = key
+        self.value = value
+    }
+
 }
 
 public struct Body: RequestComponent {
     public let body: () -> BodyType
+    
+    public init(body: @escaping () -> BodyType) {
+        self.body = body
+    }
 }
 
 public enum BodyType {
