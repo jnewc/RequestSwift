@@ -17,7 +17,7 @@ public struct URLSessionExecutor: Executor {
     
     public func execute(request: Request) async throws -> Response {
         return try await withCheckedThrowingContinuation { continuation in
-            _ = session.dataTask(with: request.urlRequest) { data, response, error in
+            session.dataTask(with: request.urlRequest) { data, response, error in
                 if let error = error {
                     continuation.resume(returning: Response(from: error))
                     return
@@ -28,7 +28,7 @@ public struct URLSessionExecutor: Executor {
                 }
                 let _response = Response(from: httpResponse, responseData: data)
                 continuation.resume(returning: _response)
-            }
+            }.resume()
         }
     }
 }
