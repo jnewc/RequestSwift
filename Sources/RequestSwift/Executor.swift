@@ -18,6 +18,10 @@ public struct URLSessionExecutor: Executor {
     /// Session headers are sent with every request
     public var headers: [String: String] = [:]
     
+    public init(session: URLSession = .shared) {
+        self.session = session
+    }
+    
     public func execute(request: Request) async throws -> Response {
         return try await withCheckedThrowingContinuation { continuation in
             let request = enrich(request: request.urlRequest)
