@@ -27,6 +27,21 @@ class RequestTests: XCTestCase {
         }
     }
     
+    var testRequestCollections: Request {
+        try!
+        Request(url: "https://newcombe.io", method: .post) {
+            HeaderCollection(headers: [
+                "Test1":"Val1",
+                "Test2":"Val2",
+            ])
+            QueryCollection(items: [
+                "Test1":"Val1",
+                "Test2":"Val2",
+            ])
+            Body { .text(text: "Test") }
+        }
+    }
+    
     func testRequestCreation() async throws {
         let request = testRequest
         let urlRequest = request.urlRequest
@@ -34,7 +49,20 @@ class RequestTests: XCTestCase {
         XCTAssertEqual(urlRequest.url?.absoluteString.components(separatedBy: "?").first, "https://newcombe.io")
         XCTAssertEqual(urlRequest.httpBody?.string, "Test")
         
-        let response = try await «request
+        let response = try await <~request
+        
+        XCTAssertNil(response.error)
+    }
+    
+    func testRequestWithCollectionCreation() async throws {
+        let request = testRequestCollections
+        let urlRequest = request.urlRequest
+        XCTAssertEqual(urlRequest.allHTTPHeaderFields!["Test1"], "Val1")
+        XCTAssertEqual(urlRequest.allHTTPHeaderFields!["Test2"], "Val2")
+        XCTAssertEqual(urlRequest.url?.absoluteString.components(separatedBy: "?").first, "https://newcombe.io")
+        XCTAssertEqual(urlRequest.httpBody?.string, "Test")
+        
+        let response = try await <~request
         
         XCTAssertNil(response.error)
     }

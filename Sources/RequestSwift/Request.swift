@@ -8,12 +8,6 @@
 import Foundation
 import SwiftUI
 
-prefix operator «
-
-public prefix func «(_ request: Request) async throws -> Response {
-    try await request.execute()
-}
-
 infix operator ~>
 
 public struct Parsed<T> {
@@ -24,7 +18,7 @@ public struct Parsed<T> {
 let jsonDecoder = JSONDecoder()
 
 public func ~><T: Decodable>(_ request: Request, _ type: T.Type) async throws -> Parsed<T> {
-    let response = try await «request
+    let response = try await <~request
     guard let data = response.data else {
         throw RequestError.unableToDecodeBody
     }
@@ -58,11 +52,17 @@ public struct Request {
     }
     
     public var headers: [Header] {
-        return components.compactMap { $0 as? Header }
+        let collectedHeaders = components.compactMap { $0 as? HeaderCollection }
+            .map { $0.headers.map { Header(key: $0.key, value: $0.value) } }
+            .joined()
+        return components.compactMap { $0 as? Header } + collectedHeaders
     }
     
     public var queryItems: [Query] {
-        return components.compactMap { $0 as? Query }
+        let collectedQuery = components.compactMap { $0 as? QueryCollection }
+            .map { $0.items.map { Query(key: $0.key, value: $0.value) } }
+            .joined()
+        return components.compactMap { $0 as? Query } + collectedQuery
     }
     
     public var body: Data? {
@@ -122,6 +122,15 @@ public struct Header: RequestComponent {
     }
 }
 
+public struct HeaderCollection: RequestComponent {
+    
+    let headers: [String: String]
+    
+    public init(headers: [String: String]) {
+        self.headers = headers
+    }
+}
+
 public struct Query: RequestComponent {
     public let key: String
     public let value: String
@@ -131,6 +140,15 @@ public struct Query: RequestComponent {
         self.value = value
     }
 
+}
+
+public struct QueryCollection: RequestComponent {
+    
+    let items: [String: String]
+    
+    public init(items: [String: String]) {
+        self.items = items
+    }
 }
 
 public struct Body: RequestComponent {

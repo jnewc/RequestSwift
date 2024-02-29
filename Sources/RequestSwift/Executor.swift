@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol Executor {
+public protocol Executor {
     func execute(request: Request) async throws -> Response
 }
 
@@ -15,9 +15,13 @@ public struct URLSessionExecutor: Executor {
     
     public let session: URLSession
     
+    /// Session headers are sent with every request
+    public var headers: [String: String] = [:]
+    
     public func execute(request: Request) async throws -> Response {
         return try await withCheckedThrowingContinuation { continuation in
-            session.dataTask(with: request.urlRequest) { data, response, error in
+            let request = enrich(request: request.urlRequest)
+            session.dataTask(with: request) { data, response, error in
                 if let error = error {
                     continuation.resume(returning: Response(from: error))
                     return
@@ -30,6 +34,16 @@ public struct URLSessionExecutor: Executor {
                 continuation.resume(returning: _response)
             }.resume()
         }
+    }
+    
+    func enrich(request: URLRequest) -> URLRequest {
+        var request = request
+        
+        headers.forEach { (name, value) in
+            request.addValue(value, forHTTPHeaderField: name)
+        }
+        
+        return request
     }
 }
 
@@ -49,4 +63,10 @@ prefix operator <~
 
 prefix func <~(_ request: Request) async throws -> Response {
     return try await request.execute()
+}
+
+infix operator <~
+
+public func <~(_ executor: Executor, _ request: Request) async throws -> Response {
+    return try await executor.execute(request: request)
 }
